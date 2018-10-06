@@ -10,24 +10,23 @@ import os
 
 parser = argparse.ArgumentParser()
 
-
 parser.add_argument("-t", "--ram_temp",help="Ram temperature",type=int, default=180)
-parser.add_argument("-i", "--input", help="input file", required=True)
-parser.add_argument("-o", "--output", help="output file", default="none")
-
+parser.add_argument("-nw", "--no_wait",    help="don't wait for stable temp",action="store_true")
+parser.add_argument("-i", "--input",   help="input file", required=True)
+parser.add_argument("-o", "--output",  help="output file", default="none")
 
 args = parser.parse_args()
 
+inpath    = os.path.normpath(args.input)
+no_wait      = args.no_wait
 ram_temp = args.ram_temp
-inpath = os.path.normpath(args.input)
 
 if(args.output == "none"):
     outpath = os.path.normpath(os.path.splitext(inpath)[0] + "_ramcool.gcode")
 else:
     outpath = os.path.normpath(args.output)
 
-print(ram_temp, inpath, outpath)
-
+print(ram_temp, no_wait, inpath, outpath)
 
 ####################################
 
@@ -42,11 +41,21 @@ outfile = open(outpath, 'w')
 
 # start at TOOLCHANGE START comment
 start          = r"^; CP TOOLCHANGE START"
-start_addition = "M109 R%d ; set temp for Ram cooling\n"
+
+if(no_wait):
+    start_addition = "M104 S%d ; set temp for Ram cooling, no wait\n"
+else:    
+    start_addition = "M109 R%d ; set temp for Ram cooling\n"
+    
 
 # end at the actual tool change (and hopefully heat back up before the next move)
 end            = r"^T[0-9]"
-end_addition   = "M109 R%s ; restore temperature\n"
+
+if(no_wait):
+    end_addition   = "M104 S%s  ; restore temperature\n"
+else:    
+    end_addition   = "M109 R%s  ; restore temperature\n"
+
 
 temperature_set = r"M104 S([0-9]*) "
 
