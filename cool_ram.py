@@ -72,23 +72,27 @@ for line in infile:
 
     
     temp_set_match = temp_set_detect.search(line)
+    start_match = start_detect.search(line)
+    end_match   = end_detect.search(line)
+
     if temp_set_match is not None:
         # matched a temperature set
         current_temp = temp_set_match.group(1)
         outfile.write(line)
         outfile.write(";matched temp! :" +  current_temp + "\n")
 
-    start_match = start_detect.search(line)
-    if (state == "idle") and (start_match is not None):
+    elif (state == "idle") and (start_match is not None):
         outfile.write(line)
         outfile.write(start_addition % ram_temp )
         state = "cooled"
     
-    end_match   = end_detect.search(line)
-    if (state == "cooled") and (end_match is not None):
+    elif (state == "cooled") and (end_match is not None):
         outfile.write(end_addition % current_temp)
         outfile.write(line)
         state = "idle"
+
+    else:
+        outfile.write(line)
         
 
 
