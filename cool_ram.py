@@ -33,8 +33,8 @@ else:
 ####################################
 
 # open the input and output files (one read only, one for writing)
-infile  = open(inpath, 'r')
-outfile = open(outpath, 'w')
+infile  = open(inpath, 'r', encoding="utf8")
+outfile = open(outpath, 'w', encoding="utf8")
 
 ############
 ## set up the strings we are going to watch for, and the
