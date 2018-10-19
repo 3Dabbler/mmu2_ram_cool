@@ -65,7 +65,7 @@ else:
     end_addition   = "M109 R%s  ; restore temperature\n"
 
 # string to check for any temperature changes.  Finds either m104 or m109, allows grabbing the temp
-temperature_set = r"M10[49] S([0-9]*) "
+temperature_set = r"M10[49] S([0-9]*)"
 
 # turn those strings into compiled regular expressions so we can search
 start_detect     = re.compile(start)
@@ -89,7 +89,7 @@ for line in infile:
     temp_set_match = temp_set_detect.search(line)
     start_match    = start_detect.search(line)
     end_match      = end_detect.search(line)
-
+    
     # if we are at a line that set the temperature:
     if temp_set_match is not None:
         # "group(1)" of the temp_set_match will contain the
