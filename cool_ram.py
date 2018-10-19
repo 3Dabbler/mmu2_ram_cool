@@ -1,13 +1,11 @@
 #!/usr/local/bin/python3
 
-
 import argparse  # simple command line argument parsing library
 import re        # regular expression library for search/replace
 import os        # os routines for reading/writing files
 
-
 # create an argument parser object
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(description='Simple script to hack the gcode from Prusa Slic3r v1.41.0 to drop temp during ram')
 
 # add the arguments
 parser.add_argument("-t", "--ram_temp",help="Ram temperature",type=int, default=180)
@@ -65,7 +63,7 @@ else:
     end_addition   = "M109 R%s  ; restore temperature\n"
 
 # string to check for any temperature changes.  Finds either m104 or m109, allows grabbing the temp
-temperature_set = r"M10[49] S([0-9]*)"
+temperature_set = r"^M10[49] S([0-9]*)"
 
 # turn those strings into compiled regular expressions so we can search
 start_detect     = re.compile(start)
