@@ -5,7 +5,32 @@ import re        # regular expression library for search/replace
 import os        # os routines for reading/writing files
 
 # create an argument parser object
-parser = argparse.ArgumentParser(description='Simple script to hack the gcode from Prusa Slic3r v1.41.0 to drop temp during ram')
+parser = argparse.ArgumentParser(description='Simple script to hack the gcode from Prusa Slic3r v1.41.0 to drop temp during ram',
+                                 epilog = """
+Example usage:
+-----------
+Example #1: Cool to 195 for ramming.  Stabilize at 195 before ram,
+  stabilize at print temp just after tool change
+  
+#$ cool_ram.py -t 195    -i input.gcode -o output.gcode
+
+-----------
+Example #2: Set temp to 180 (default temp) for ram, but don't wait
+  for it to stabilize.  This basically just cuts power to the nozzle
+  and immediately starts ramming.  After the tool change, it restores
+  temperature to the print temp, but doesn't wait for it to stabilize.
+
+#$ cool_ram.py -nwr -nwt -i input.gcode -o output.gcode
+
+-----------
+Example #3: Same as previous, but allow the temp to stabilize
+  just after the tool change before printing with the new filament.
+  Might be a good idea if nozzle isn't getting hot quickly enough.
+
+#$ cool_ram.py -nwr -i input.gcode -o output.gcode
+
+                                 """,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
 
 # add the arguments
 parser.add_argument("-t",    "--ram_temp",              help="Ram temperature",type=int, default=180)
