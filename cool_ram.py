@@ -4,6 +4,27 @@ import argparse  # simple command line argument parsing library
 import re        # regular expression library for search/replace
 import os        # os routines for reading/writing files
 
+import sys
+
+from io import open
+
+
+if (sys.version_info > (3, 0)):
+    # Python 3 code in this block
+    python3 = True
+else:
+    # Python 2 code in this block
+    python3 = False
+
+python2 = not python3
+ 
+
+def fileWrite(file, string):
+    if(python3):
+        file.write(string)
+    else:
+        file.write(unicode(string))
+        
 # create an argument parser object
 parser = argparse.ArgumentParser(description='Simple script to hack the gcode from Prusa Slic3r v1.41.0 to drop temp during ram',
                                  epilog = """
@@ -146,7 +167,8 @@ for line in infile:
         current_temp = temp_set_match.group(1)
         
         # output a comment line indicating we grabbed this temperature (debugging only)
-        outfile.write(";matched temp! :" +  current_temp + "\n")
+#        outfile.write(unicode(";matched temp! :" +  current_temp + "\n"))
+        fileWrite(outfile,";matched temp! :" +  current_temp + "\n")
 
         # if this temperature change is happening in the 'cooled' state,
         #  it is adjusting the temperature for the next filament, and
@@ -157,15 +179,15 @@ for line in infile:
         #   if we are in cooled state, but the temp_change_override option is set, print the temperature change
         if(  (state != "cooled") or (temp_change_override)):
             # output the temperature set line to the output file
-            outfile.write(line)
+            fileWrite(outfile,line)
 
     # if we are in idle state and match the 'start' pattern        
     elif (state == "idle") and (start_match is not None):
         # output the start pattern line to the output file
-        outfile.write(line)
+        fileWrite(outfile,line)
         # add the "cool down" line, with the %d in the pattern replaced with the
         #   temperature specified on the command line
-        outfile.write(start_addition % ram_temp )
+        fileWrite(outfile,start_addition % ram_temp )
 
         # remember that we are currently in the 'temp dropped' state
         state = "cooled"
@@ -176,14 +198,14 @@ for line in infile:
 
         # output the "restore temperature" string, with the most recently
         #    detected temperature in the original gcode
-        outfile.write(pre_tc_addition % current_temp)
+        fileWrite(outfile,pre_tc_addition % current_temp)
 
         # don't forget to output the tool change line
-        outfile.write(line)
+        fileWrite(outfile,line)
 
         # output the "stabilization" temp if needed
         if(post_tc_addition != ""):
-            outfile.write(post_tc_addition % current_temp)
+            fileWrite(outfile,post_tc_addition % current_temp)
 
         # go back to printing state (normal temperature)
         state = "idle"
@@ -191,7 +213,7 @@ for line in infile:
     else:
         # if we haven't matched one of the magic patterns, just print
         # the normal line
-        outfile.write(line)
+        fileWrite(outfile,line)
         
 
 
