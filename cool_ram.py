@@ -61,6 +61,7 @@ parser.add_argument("-fs",   "--full_stabilization_tc", help="wait for full stab
 parser.add_argument("--temp_change_override",           help="Retain the Slic3r inserted temperature after ramming and before tool change (default false) ",action="store_true")
 parser.add_argument("-i",    "--input",                 help="input file", required=True)
 parser.add_argument("-o",    "--output",                help="output file", default="none")
+parser.add_argument("-b",    "--beep_after_tc",         help="beep after tool change (for tip inspection)",action="store_true")
 
 # pull in the command line and parse all the arguments into the 'args' variable
 args = parser.parse_args()
@@ -71,6 +72,7 @@ ram_temp               = args.ram_temp
 full_stabilization_tc  = args.full_stabilization_tc
 no_wait_ram            = args.no_wait_ram
 temp_change_override   = args.temp_change_override
+beep                   = args.beep_after_tc
 
 if(full_stabilization_tc):
     no_wait_tc = False
@@ -109,8 +111,8 @@ else:
     
 
 # the string that indicates the actual tool change (unload/load, after the ram)
-end            = r"^T[0-9]"
-
+end1           = r"^T[0-9]"
+end2           = "^; CP TOOLCHANGE END"
 
 # Three options for the end:
 
@@ -124,9 +126,15 @@ end            = r"^T[0-9]"
 # -no_wait_tc specified
 #    m104 before tool change
 
+if(beep):
+    beep_addition = "M300\n"
+else:
+    beep_addition = ""
+    
 if(full_stabilization_tc):
     pre_tc_addition  = "M109 R%s  ; restore temperature, stabilize before TC\n"
     post_tc_addition = ""
+    
 elif(no_wait_tc):
     pre_tc_addition  = "M104 S%s  ; restore temperature\n"
     post_tc_addition = ""
@@ -139,7 +147,8 @@ temperature_set = r"^M10[49] S([0-9]*)"
 
 # turn those strings into compiled regular expressions so we can search
 start_detect     = re.compile(start)
-end_detect       = re.compile(end)
+end1_detect       = re.compile(end1)
+end2_detect       = re.compile(end2)
 temp_set_detect  = re.compile(temperature_set)
 
 # current temp will track the most recently set temperature in the original gcode
@@ -158,7 +167,7 @@ for line in infile:
     # see if the current line matches any of the start/end/temp_set patterns
     temp_set_match = temp_set_detect.search(line)
     start_match    = start_detect.search(line)
-    end_match      = end_detect.search(line)
+    end_match      = end1_detect.search(line) or end2_detect.search(line)
     
     # if we are at a line that set the temperature:
     if temp_set_match is not None:
@@ -167,7 +176,6 @@ for line in infile:
         current_temp = temp_set_match.group(1)
         
         # output a comment line indicating we grabbed this temperature (debugging only)
-#        outfile.write(unicode(";matched temp! :" +  current_temp + "\n"))
         fileWrite(outfile,";matched temp! :" +  current_temp + "\n")
 
         # if this temperature change is happening in the 'cooled' state,
@@ -195,7 +203,7 @@ for line in infile:
     # if we are already in 'cooled' state (temperature dropped) and we detect
     #    the 'end' pattern (tool change):
     elif (state == "cooled") and (end_match is not None):
-
+        
         # output the "restore temperature" string, with the most recently
         #    detected temperature in the original gcode
         fileWrite(outfile,pre_tc_addition % current_temp)
@@ -207,6 +215,9 @@ for line in infile:
         if(post_tc_addition != ""):
             fileWrite(outfile,post_tc_addition % current_temp)
 
+        if(beep):
+            fileWrite(outfile,beep_addition)
+
         # go back to printing state (normal temperature)
         state = "idle"
 
@@ -215,6 +226,8 @@ for line in infile:
         # the normal line
         fileWrite(outfile,line)
         
+
+# at the end,         
 
 
 
